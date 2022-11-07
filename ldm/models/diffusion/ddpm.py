@@ -131,7 +131,7 @@ class DDPM(pl.LightningModule):
         self.linear_end = linear_end
         assert alphas_cumprod.shape[0] == self.num_timesteps, 'alphas have to be defined for each timestep'
 
-        to_torch = partial(torch.tensor, dtype=torch.float32)
+        to_torch = partial(torch.tensor, dtype=torch.float16)
 
         self.register_buffer('betas', to_torch(betas))
         self.register_buffer('alphas_cumprod', to_torch(alphas_cumprod))
@@ -256,7 +256,7 @@ class DDPM(pl.LightningModule):
         img = torch.randn(shape, device=device)
         intermediates = [img]
         for i in tqdm(reversed(range(0, self.num_timesteps)), desc='Sampling t', total=self.num_timesteps):
-            img = self.p_sample(img, torch.full((b,), i, device=device, dtype=torch.long),
+            img = self.p_sample(img, torch.full((b,), i, device=device, dtype=torch.float16),
                                 clip_denoised=self.clip_denoised)
             if i % self.log_every_t == 0 or i == self.num_timesteps - 1:
                 intermediates.append(img)
@@ -469,7 +469,7 @@ class LatentDiffusion(DDPM):
             self.restarted_from_ckpt = True
 
     def make_cond_schedule(self, ):
-        self.cond_ids = torch.full(size=(self.num_timesteps,), fill_value=self.num_timesteps - 1, dtype=torch.long)
+        self.cond_ids = torch.full(size=(self.num_timesteps,), fill_value=self.num_timesteps - 1, dtype=torch.float16)
         ids = torch.round(torch.linspace(0, self.num_timesteps - 1, self.num_timesteps_cond)).long()
         self.cond_ids[:self.num_timesteps_cond] = ids
 
@@ -1140,7 +1140,7 @@ class LatentDiffusion(DDPM):
             temperature = [temperature] * timesteps
 
         for i in iterator:
-            ts = torch.full((b,), i, device=self.device, dtype=torch.long)
+            ts = torch.full((b,), i, device=self.device, dtype=torch.float16)
             if self.shorten_cond_schedule:
                 assert self.model.conditioning_key != 'hybrid'
                 tc = self.cond_ids[ts].to(cond.device)
@@ -1191,7 +1191,7 @@ class LatentDiffusion(DDPM):
             assert x0.shape[2:3] == mask.shape[2:3]  # spatial size has to match
 
         for i in iterator:
-            ts = torch.full((b,), i, device=device, dtype=torch.long)
+            ts = torch.full((b,), i, device=device, dtype=torch.float16)
             if self.shorten_cond_schedule:
                 assert self.model.conditioning_key != 'hybrid'
                 tc = self.cond_ids[ts].to(cond.device)
