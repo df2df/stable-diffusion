@@ -234,7 +234,7 @@ class DDIMSampler(object):
         x_dec = x_latent
         for i, step in enumerate(iterator):
             index = total_steps - i - 1
-            ts = torch.full((x_latent.shape[0],), step, device=x_latent.device, dtype=torch.long)
+            ts = torch.full((x_latent.shape[0],), step, device=x_latent.device, dtype=torch.float16)
             x_dec, _ = self.p_sample_ddim(x_dec, cond, ts, index=index, use_original_steps=use_original_steps,
                                           unconditional_guidance_scale=unconditional_guidance_scale,
                                           unconditional_conditioning=unconditional_conditioning)
